@@ -2,6 +2,7 @@ import cors from "cors";
 import express, { Application, Request, Response } from "express";
 import router from "../routes/usuario";
 import { Express } from 'express';
+import dbConnect from "../database/config";
 
 
 
@@ -18,12 +19,18 @@ class Server {
         this.port =  process.env.PORT || '3001';
         this.app = express();
 
+        // Conectar a base de datos ya que tmb se debe llamar desde el constructor
+        this.conectarDB();
 
         // Middlewares
         this.middlewares();
 
         // Rutas de mi aplicacion
         this.routes();
+    }
+
+    async conectarDB() {
+        await dbConnect()//esta viene de mi server.ts
     }
 
     middlewares() {
