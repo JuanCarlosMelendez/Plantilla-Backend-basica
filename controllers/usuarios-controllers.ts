@@ -3,6 +3,7 @@ import Usuario from "../models/usuario";
 import  bcryptjs  from "bcryptjs"
 
 
+
 export const getUsuarios = ( req: Request , res: Response) => {
    
     // const query = req.query; (sin desestructurar el query)
@@ -32,10 +33,18 @@ export const getUsuario = ( req: Request , res: Response) => {
 
 export const postUsuario = async ( req: Request , res: Response) => {
 
+
     const { name, correo, password, rol } = req.body;
     const usuario = new Usuario( {name, correo, password, rol} );
 
     // Verificar si el correo existe
+
+    const existeEmail = await Usuario.findOne( { correo } );
+    if ( existeEmail ) {
+        return res.status(400).json({
+            msg: 'Ese correo ya está registrado'
+        });
+    }
 
     // Encriptar la contraseña
 

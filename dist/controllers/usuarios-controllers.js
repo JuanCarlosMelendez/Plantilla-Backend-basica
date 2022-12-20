@@ -42,6 +42,12 @@ const postUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     const { name, correo, password, rol } = req.body;
     const usuario = new usuario_1.default({ name, correo, password, rol });
     // Verificar si el correo existe
+    const existeEmail = yield usuario_1.default.findOne({ correo });
+    if (existeEmail) {
+        return res.status(400).json({
+            msg: 'Ese correo ya está registrado'
+        });
+    }
     // Encriptar la contraseña
     const salt = bcryptjs_1.default.genSaltSync();
     /* NOTA: El salt es las vueltas que se dan para encriptar algo,
