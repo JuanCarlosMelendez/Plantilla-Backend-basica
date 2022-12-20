@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import Usuario from "../models/usuario";
+import  bcryptjs  from "bcryptjs"
 
 
 export const getUsuarios = ( req: Request , res: Response) => {
@@ -28,14 +30,27 @@ export const getUsuario = ( req: Request , res: Response) => {
     })
 }
 
-export const postUsuario = ( req: Request , res: Response) => {
+export const postUsuario = async ( req: Request , res: Response) => {
 
-    const { nombre, edad} = req.body;
+    const { name, correo, password, rol } = req.body;
+    const usuario = new Usuario( {name, correo, password, rol} );
+
+    // Verificar si el correo existe
+
+    // Encriptar la contraseña
+
+    const salt = bcryptjs.genSaltSync();
+                /* NOTA: El salt es las vueltas que se dan para encriptar algo, 
+                normalmente esta en 10 sino se especifica nada, pero 
+                si se le pone otro numero sera mas robusta pero tardara más
+                en compilar. */
+    usuario.password = bcryptjs.hashSync ( password, salt );
+
+    // Guardar en BD:
+    await usuario.save();
 
     res.json({
-        msg: 'postUsuario',
-        nombre, 
-        edad
+        usuario
     })
 }
 
