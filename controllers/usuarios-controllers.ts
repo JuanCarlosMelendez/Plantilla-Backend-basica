@@ -4,7 +4,7 @@ import  bcryptjs  from "bcryptjs"
 
 
 
-export const getUsuarios = ( req: Request , res: Response) => {
+export const getUsuarios = async ( req: Request , res: Response) => {
    
     // const query = req.query; (sin desestructurar el query)
     const { q, nombre = "no-name", apikey, page = 1, limit =  10 } = req.query;
@@ -13,11 +13,18 @@ export const getUsuarios = ( req: Request , res: Response) => {
     //por medio del query params podemos mandar info por alli y para hacerlo usamos el query.params
     //una vez configurado puedes probarlo introducciondo info que desees el tipo: ?q=hola&nombre=juan&apikey=123456    //localhost:3001/api/usuarios?q=hola&nombre=juan&apikey=123456
 
+    const { limite =  5, desde = 0 } = req.query;
+
+    const [ total, usuarios ] = await Promise.all( [
+        Usuario.countDocuments({ estado: true }),
+        Usuario.find({ estado: true })
+        .skip(Number( desde ))
+        .limit(Number( limite ))
+    ]);
+
     res.json({
-        msg: 'getUsuarios',
-        q,
-        nombre,
-        apikey
+        total, 
+        usuarios
     })
 }
 
@@ -39,15 +46,15 @@ export const postUsuario = async ( req: Request , res: Response) => {
 
     // Verificar si el correo existe
 
-    const existeEmail = await Usuario.findOne( { correo } );
-    if ( existeEmail ) {
-        return res.status(400).json({
-            msg: 'Ese correo ya está registrado'
-        });
-    }
+    // const existeEmail = await Usuario.findOne( { correo } );
+    // if ( existeEmail ) {
+    //     return res.status(400).json({
+    //         msg: 'Ese correo ya está registrado'
+    //     });
+    // }
 
     // Encriptar la contraseña
-
+    
     const salt = bcryptjs.genSaltSync();
                 /* NOTA: El salt es las vueltas que se dan para encriptar algo, 
                 normalmente esta en 10 sino se especifica nada, pero 
@@ -63,21 +70,33 @@ export const postUsuario = async ( req: Request , res: Response) => {
     })
 }
 
-export const putUsuario = ( req: Request , res: Response) => {
+export const putUsuario = async ( req: Request , res: Response) => {
 
     const { id } = req.params;
-    const { body } = req;
+    const { _id, password, google, correo, ...resto } = req.body;
 
-    res.json({
-        msg: 'putUsuario',
-        id,
-        body
-    })
+// validar todo contra base de datos 
+    if ( password ) {
+        //encriptar contraseña
+        const salt = bcryptjs.genSaltSync();
+        resto.password = bcryptjs.hashSync ( password, salt );
+    }
+
+    const usuario =  await Usuario.findByIdAndUpdate( id, resto );
+
+    res.json(usuario);
 }
 
-export const deleteUsuario = ( req: Request , res: Response) => {
+export const deleteUsuario = async ( req: Request , res: Response) => {
 
     const { id } = req.params;
+
+    //Fisicamente lo borrramos
+    // const usuario = await Usuario.findByIdAndDelete( id );
+
+    const usuario = await Usuario.findByIdAndUpdate( id, { estado: false });
+
+
 
     res.json({
         msg: 'deleteUsuario',
